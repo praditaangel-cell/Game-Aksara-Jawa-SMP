@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SINAU AKSARA JAWA</title>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Javanese&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            overflow: hidden; 
+            touch-action: manipulation;
+            user-select: none;
+            background-color: #fdf6e3;
+        }
+        .aksara-font {
+            font-family: 'Noto Sans Javanese', serif;
+            line-height: 1.5;
+        }
+        /* Custom Animations */
+        @keyframes float {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(2deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+        .animate-float {
+            animation: float 6s ease-in-out infinite;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen text-gray-800">
+    <div id="root" class="h-full w-full"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useMemo, useCallback } = React;
+
+        // =========================================================================
+        // URL MUSIK LATAR MENGGUNAKAN DIRECT LINK GOOGLE DRIVE ANDA
+        // =========================================================================
+        const AUDIO_BG = "https://drive.google.com/uc?export=download&id=1P8YWPMQn6-uy0gW4Ttbi1CM8yPeCQAmT";
+        
+        
+        const AKSARA_DATA = [
+            { char: 'ꦲ', latin: 'Ha' }, { char: 'ꦤ', latin: 'Na' }, { char: 'ꦕ', latin: 'Ca' }, { char: 'ꦫ', latin: 'Ra' },
+            { char: 'ꦏ', latin: 'Ka' }, { char: 'ꦢ', latin: 'Da' }, { char: 'ꦠ', latin: 'Ta' }, { char: 'ꦱ', latin: 'Sa' },
+            { char: 'ꦮ', latin: 'Wa' }, { char: 'ꦭ', latin: 'La' }, { char: 'ꦥ', latin: 'Pa' }, { char: 'ꦝ', latin: 'Dha' },
+            { char: 'ꦗ', latin: 'Ja' }, { char: 'ꦪ', latin: 'Ya' }, { char: 'ꦚ', latin: 'Nya' }, { char: 'ꦩ', latin: 'Ma' },
+            { char: 'ꦒ', latin: 'Ga' }, { char: 'ꦧ', latin: 'Ba' }, { char: 'ꦛ', latin: 'Tha' }, { char: 'ꦔ', latin: 'Nga' },
+        ];
+
+        // Pasangan
+        const PASANGAN_DATA = AKSARA_DATA.map(item => ({
+            char: ꧀${item.char},
+            latin: Pasangan ${item.latin},
+            displayNote: "(Letak di bawah)"
+        }));
+
+        const SANDHANGAN_DATA = [
+            { char: 'ꦶ', latin: 'Wulu (i)' }, { char: 'ꦸ', latin: 'Suku (u)' },
+            { char: 'ꦼ', latin: 'Pepet (e)' }, { char: 'ꦺ', latin: 'Taling (é)' },
+            { char: 'ꦴ', latin: 'Tarung' }, { char: 'ꦂ', latin: 'Layar (r)' },
+            { char: 'ꦁ', latin: 'Cecak (ng)' }, { char: 'ꦃ', latin: 'Wignyan (h)' },
+            { char: '꧀', latin: 'Pangkon' },
+        ];
+
+        const TULADHA_DATA = [
+            { char: 'ꦱꦥꦶ', latin: 'Sapi' },
+            { char: 'ꦧꦸꦏꦸ', latin: 'Buku' },
+            { char: 'ꦱꦼꦒ', latin: 'Sega (Nasi)' },
+            { char: 'ꦩꦔꦤ꧀', latin: 'Mangan (Makan)' },
+            { char: 'ꦱꦶꦤꦲꦸ', latin: 'Sinau (Belajar)' },
+            { char: 'ꦒꦸꦭ', latin: 'Gula' },
+        ];
+
+        // --- DATA SOAL KUIS ---
+        const QUIZ_DATA = {
+            gampang: [
+                { q: 'ꦲꦤ', a: 'Ana', opts: ['Ana', 'Ani', 'Ina', 'Una'] },
+                { q: 'ꦠꦸꦏꦸ', a: 'Tuku', opts: ['Tuku', 'Buku', 'Kuku', 'Suku'] },
+                { q: 'ꦱꦥ', a: 'Sapa', opts: ['Sapa', 'Sapi', 'Apa', 'Sapu'] },
+                { q: 'ꦫꦗ', a: 'Raja', opts: ['Raja', 'Rasa', 'Jara', 'Aja'] },
+                { q: 'ꦩꦠ', a: 'Mata', opts: ['Mata', 'Maca', 'Rata', 'Bata'] },
+            ],
+            sedheng: [
+                { q: 'ꦱꦼꦒ', a: 'Sega', opts: ['Sega', 'Sela', 'Raga', 'Lega'] },
+                { q: 'ꦱꦫꦺ', a: 'Saré', opts: ['Saré', 'Laré', 'Soro', 'Paré'] },
+                { q: 'ꦏꦸꦫꦸ', a: 'Kuru', opts: ['Kuru', 'Turu', 'Luru', 'Guru'] },
+                { q: 'ꦧꦭꦶ', a: 'Bali', opts: ['Bali', 'Tali', 'Kali', 'Wali'] },
+                { q: 'ꦭꦔꦶ', a: 'Langi', opts: ['Langi', 'Wangi', 'Tangji', 'Bangki'] }
+            ],
+            angel: [
+                { q: 'ꦩꦔꦤ꧀ꦱꦼꦒ', a: 'Mangan sega', opts: ['Mangan sega', 'Mangan raga', 'Jajan sega', 'Papan sega'] },
+                { q: 'ꦠꦸꦏꦸꦧꦸꦏꦸ', a: 'Tuku buku', opts: ['Tuku buku', 'Tuku duku', 'Buku kuku', 'Suku buku'] },
+                { q: 'ꦱꦶꦤꦲꦸꦗꦮ', a: 'Sinau Jawa', opts: ['Sinau Jawa', 'Sinau Cara', 'Minau Jawa', 'Tuku Jawa'] },
+                { q: 'ꦧꦥꦏ꧀ꦱꦫꦺ', a: 'Bapak saré', opts: ['Bapak saré', 'Bapak laré', 'Kapak saré', 'Lapak soré'] },
+                { q: 'ꦥꦱꦂꦩꦭꦼꦩ꧀', a: 'Pasar malem', opts: ['Pasar malem', 'Pasar malang', 'Sabar malem', 'Pagar dalem'] }
+            ]
+        };
+
+        // --- DATA PUZZLE ---
+        const PUZZLE_DATA = {
+            gampang: [
+                { hint: 'Sa-pa', parts: [{id:1, t:'ꦥ', o:1}, {id:2, t:'ꦱ', o:0}] },
+                { hint: 'Ra-ja', parts: [{id:1, t:'ꦗ', o:1}, {id:2, t:'ꦫ', o:0}] },
+                { hint: 'Ma-ca', parts: [{id:1, t:'ꦕ', o:1}, {id:2, t:'ꦩ', o:0}] },
+                { hint: 'Ta-ni', parts: [{id:1, t:'ꦤꦶ', o:1}, {id:2, t:'ꦠ', o:0}] },
+                { hint: 'Gu-la', parts: [{id:1, t:'ꦭ', o:1}, {id:2, t:'ꦒꦸ', o:0}] },
+            ],
+            sedheng: [
+                { hint: 'Se-ga Go-reng', parts: [{id:1, t:'ꦒ', o:1}, {id:2, t:'ꦫꦺꦁ', o:3}, {id:3, t:'ꦱꦼ', o:0}, {id:4, t:'ꦒꦺꦴ', o:2}] },
+                { hint: 'Si-na-u', parts: [{id:1, t:'ꦤ', o:1}, {id:2, t:'ꦱꦶ', o:0}, {id:3, t:'ꦲꦸ', o:2}] },
+                { hint: 'Ce-cak', parts: [{id:1, t:'ꦕ', o:0}, {id:2, t:'ꦕꦏ꧀', o:1}] },
+                { hint: 'Ba-li', parts: [{id:1, t:'ꦭꦶ', o:1}, {id:2, t:'ꦧ', o:0}] },
+                { hint: 'Ku-ru', parts: [{id:1, t:'ꦫꦸ', o:1}, {id:2, t:'ꦏꦸ', o:0}] },
+            ],
+            angel: [
+                { hint: 'O-ra Po-po', parts: [{id:1, t:'ꦫ', o:1}, {id:2, t:'ꦥꦺꦴ', o:2}, {id:3, t:'ꦲꦺꦴ', o:0}, {id:4, t:'ꦥꦺꦴ', o:3}] },
+                { hint: 'Ja-ngan A-sem', parts: [{id:1, t:'ꦱꦼꦩ꧀', o:3}, {id:2, t:'ꦔꦤ꧀', o:1}, {id:3, t:'ꦗ', o:0}, {id:4, t:'ꦲ', o:2}] },
+                { hint: 'Sa-bar', parts: [{id:1, t:'ꦧꦂ', o:1}, {id:2, t:'ꦱ', o:0}] },
+                { hint: 'Me-nyang Pa-sar', parts: [{id:1, t:'ꦥ', o:2}, {id:2, t:'ꦩꦼ', o:0}, {id:3, t:'ꦱꦂ', o:3}, {id:4, t:'ꦚꦁ', o:1}] }
+            ]
+        };
+
+        // --- AUDIO HELPERS ---
+        const playSound = (type) => {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return;
+                const ctx = new AudioContext();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                if (type === 'correct') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(600, ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(1000, ctx.currentTime + 0.1);
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.3);
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(150, ctx.currentTime);
+                    osc.frequency.linearRampToValueAtTime(100, ctx.currentTime + 0.2);
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.3);
+                } else if (type === 'click') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(800, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.05, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.1);
+                }
+            } catch(e) {}
+        };
+
+        const Button = ({ onClick, children, className = "", disabled=false, color="blue" }) => {
+            const colors = {
+                blue: "bg-sky-500 hover:bg-sky-600 border-b-4 border-sky-700",
+                green: "bg-emerald-500 hover:bg-emerald-600 border-b-4 border-emerald-700",
+                red: "bg-rose-500 hover:bg-rose-600 border-b-4 border-rose-700",
+                yellow: "bg-amber-400 hover:bg-amber-500 border-b-4 border-amber-600",
+                purple: "bg-purple-500 hover:bg-purple-600 border-b-4 border-purple-700",
+                gray: "bg-gray-300 border-b-4 border-gray-400 text-gray-500",
+                emerald: "bg-emerald-500 hover:bg-emerald-600 border-b-4 border-emerald-700",
+            };
+            const activeColor = disabled ? colors.gray : colors[color];
+
+            return (
+                <button
+                    onClick={(e) => { 
+                        if(!disabled) { 
+                            playSound('click'); 
+                            onClick(e); 
+                        }
+                    }}
+                    disabled={disabled}
+                    className={${activeColor} ${className} text-white font-bold py-3 px-6 rounded-2xl shadow-lg transform transition active:translate-y-1 active:border-b-0 disabled:transform-none disabled:border-b-4}
+                >
+                    {children}
+                </button>
+            );
+        };
+
+        const IconBack = () => <span className="text-2xl font-bold">←</span>;
+        const IconHome = () => <span className="text-2xl">🏠</span>;
+
+        // --- GAME COMPONENTS ---
+
+        // 1. FLASHCARDS
+        const Flashcards = ({ onBack }) => {
+            const [tab, setTab] = useState('aksara');
+            const [index, setIndex] = useState(0);
+
+            const getData = () => {
+                switch(tab) {
+                    case 'aksara': return AKSARA_DATA;
+                    case 'pasangan': return PASANGAN_DATA;
+                    case 'sandhangan': return SANDHANGAN_DATA;
+                    case 'tuladha': return TULADHA_DATA;
+                    default: return AKSARA_DATA;
+                }
+            };
+            
+            const data = getData();
+            const currentItem = data[index];
+
+            const next = () => setIndex((prev) => (prev + 1) % data.length);
+            const prev = () => setIndex((prev) => (prev - 1 + data.length) % data.length);
+            const changeTab = (t) => { setTab(t); setIndex(0); };
+
+            return (
+                <div className="flex flex-col items-center h-full p-4 relative animate-fade-in bg-orange-50">
+                    <div className="w-full flex justify-between items-center mb-4">
+                        <Button color="red" onClick={onBack} className="p-2 px-4 rounded-xl"><IconBack /></Button>
+                        <h2 className="text-2xl font-bold text-orange-800">SINAU</h2>
+                        <div className="w-12"></div>
+                    </div>
+
+                    <div className="flex gap-2 mb-4 overflow-x-auto w-full justify-start md:justify-center p-2 no-scrollbar">
+                        {['aksara','pasangan','sandhangan','tuladha'].map(t => (
+                            <button key={t} onClick={()=>changeTab(t)} className={px-4 py-2 rounded-full whitespace-nowrap font-bold capitalize ${tab===t?'bg-orange-500 text-white':'bg-white text-orange-500 border border-orange-200'}}>{t}</button>
+                        ))}
+                    </div>
+
+                    <div className="flex-1 flex flex-col justify-center w-full max-w-md">
+                        <div className="bg-white p-8 rounded-3xl shadow-2xl w-full aspect-square flex flex-col items-center justify-center border-8 border-orange-200 relative overflow-hidden">
+                             <div className="absolute top-0 left-0 w-full h-4 bg-orange-200"></div>
+                            <div className="aksara-font text-8xl md:text-9xl mb-6 text-center text-orange-900 leading-snug">
+                                {currentItem.char}
+                            </div>
+                            <h2 className="text-3xl font-bold text-gray-700">{currentItem.latin}</h2>
+                            {currentItem.displayNote && <p className="text-gray-400 text-sm mt-2">{currentItem.displayNote}</p>}
+                        </div>
+
+                        <div className="flex gap-8 mt-8 w-full justify-between items-center">
+                            <Button color="yellow" onClick={prev} className="w-20 rounded-full">←</Button>
+                            <div className="text-lg font-bold text-orange-800 bg-orange-100 px-4 py-1 rounded-full">{index + 1} / {data.length}</div>
+                            <Button color="yellow" onClick={next} className="w-20 rounded-full">→</Button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // 2. CATCHER GAME 
+        const CatcherGame = ({ onBack, isTwoPlayer, level }) => {
+            const [gameState, setGameState] = useState('playing'); 
+            const [timeLeft, setTimeLeft] = useState(90);
+            const [targetChar, setTargetChar] = useState(AKSARA_DATA[0]);
+            const targetCharRef = useRef(targetChar); 
+            const [fallingItems, setFallingItems] = useState([]);
+            
+            const [p1Score, setP1Score] = useState(0);
+            const [p1Lives, setP1Lives] = useState(3);
+            const [p2Score, setP2Score] = useState(0);
+            const [p2Lives, setP2Lives] = useState(3);
+
+            useEffect(() => {
+                targetCharRef.current = targetChar;
+            }, [targetChar]);
+
+            useEffect(() => {
+                if (gameState !== 'playing') return;
+
+                let spawnChance = 0.03;  
+                let baseSpeed = 0.15;    
+                
+                if (level === 'sedheng') {
+                    spawnChance = 0.06;
+                    baseSpeed = 0.35;
+                } else if (level === 'angel') {
+                    spawnChance = 0.12;
+                    baseSpeed = 0.6;
+                }
+
+                const timer = setInterval(() => {
+                    setTimeLeft((prev) => {
+                        if (prev <= 1) { setGameState('gameover'); return 0; }
+                        return prev - 1;
+                    });
+                }, 1000);
+
+                const gameLoop = setInterval(() => {
+                    setFallingItems((prev) => {
+                        if (Math.random() < spawnChance) { 
+                            const isTarget = Math.random() < 0.40;
+                            const charData = isTarget 
+                                ? targetCharRef.current 
+                                : AKSARA_DATA[Math.floor(Math.random() * AKSARA_DATA.length)];
+
+                            const newItem = {
+                                id: Date.now() + Math.random(),
+                                x: 10 + Math.random() * 80, 
+                                y: -15, 
+                                charData: charData,
+                                speed: baseSpeed + (Math.random() * 0.2) 
+                            };
+                            return [...prev, newItem];
+                        }
+                        return prev.map(item => ({ ...item, y: item.y + item.speed })).filter(item => item.y < 110);
+                    });
+                }, 16);
+
+                return () => { clearInterval(timer); clearInterval(gameLoop); };
+            }, [gameState, level]);
+
+            const handleTap = (item, player) => {
+                if (gameState !== 'playing') return;
+                setFallingItems(prev => prev.filter(i => i.id !== item.id));
+
+                if (item.charData.char === targetChar.char) {
+                    playSound('correct');
+                    if (player === 1) setP1Score(s => s + 10);
+                    else setP2Score(s => s + 10);
+                    
+                    const newTarget = AKSARA_DATA[Math.floor(Math.random()*AKSARA_DATA.length)];
+                    setTargetChar(newTarget);
+                } else {
+                    playSound('wrong');
+                    if (player === 1) setP1Lives(l => { if (l-1 <= 0) setGameState('gameover'); return l-1; });
+                    else setP2Lives(l => { if (l-1 <= 0) setGameState('gameover'); return l-1; });
+                }
+            };
+
+            if (gameState === 'gameover') {
+                return (
+                    <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center text-white z-50">
+                        <h2 className="text-4xl font-bold mb-4 text-sky-400">WAKTU HABIS!</h2>
+                        <div className="bg-white/10 p-6 rounded-xl text-center mb-6 w-64">
+                            <p className="text-lg">Pemain 1: {p1Score}</p>
+                            {isTwoPlayer && <p className="text-lg">Pemain 2: {p2Score}</p>}
+                            {isTwoPlayer && <p className="mt-4 text-yellow-300 font-bold text-xl">{p1Score > p2Score ? "P1 MENANG!" : p1Score < p2Score ? "P2 MENANG!" : "SERI!"}</p>}
+                        </div>
+                        <Button color="blue" onClick={onBack}>Kembali</Button>
+                    </div>
+                );
+            }
+
+            const GameArea = ({ playerNum }) => (
+                <div className={relative h-full overflow-hidden border-r-2 border-sky-300 bg-sky-50 ${isTwoPlayer ? 'w-1/2' : 'w-full'}}>
+                    {fallingItems.map(item => (
+                        <div 
+                            key={item.id} 
+                            onClick={(e) => { e.stopPropagation(); handleTap(item, playerNum); }}
+                            className="absolute cursor-pointer transform hover:scale-110 active:scale-95 transition-transform"
+                            style={{ left: ${item.x}%, top: ${item.y}% }}
+                        >
+                            <div className="w-16 h-16 bg-white rounded-full shadow-lg border-2 border-sky-200 flex items-center justify-center">
+                                <span className="aksara-font text-3xl select-none">{item.charData.char}</span>
+                            </div>
+                        </div>
+                    ))}
+                    <div className="absolute bottom-4 w-full text-center text-sky-300 text-sm font-bold pointer-events-none opacity-50">
+                        TEKAN AKSARA YANG BENAR
+                    </div>
+                </div>
+            );
+
+            return (
+                <div className="h-full flex flex-col">
+                    <div className="h-20 bg-sky-600 text-white flex items-center justify-between px-4 shadow-md z-10">
+                        <button onClick={onBack}><IconBack/></button>
+                        <div className="flex flex-col items-center">
+                            <div className="text-xs uppercase font-bold text-sky-200">Cari Aksara:</
